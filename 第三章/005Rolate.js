@@ -11,10 +11,16 @@ window.onload = () => {
     // 顶点着色器
     const VSHADER_SOURCE = (
         ` 
+            // x' = x*CosB - y*SinB
+            // y' = x*SinB + y*CosB
+            // z' = z
             attribute vec4 a_Position;
+            uniform float u_SinB,u_CosB;
             void main(){ 
-                gl_Position = a_Position;
-                gl_PointSize = 10.0;
+                gl_Position.x = a_Position.x * u_CosB - a_Position.y * u_SinB;
+                gl_Position.y = a_Position.x * u_SinB + a_Position.y * u_CosB;
+                gl_Position.z = a_Position.z;
+                gl_Position.w = 1.0;
             }
         `
     )
@@ -24,7 +30,7 @@ window.onload = () => {
         `void main(){
             gl_FragColor = vec4(0,0.5,0,1.0);
         }`
-    )
+    ) 
 
     // 初始化着色器
     if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
@@ -35,6 +41,20 @@ window.onload = () => {
     // 设置顶点信息
     const n = initVertexBuffers(gl)
 
+    // 旋转
+    // 旋转角度 
+    const angle = 30
+    const radian = Math.PI * angle / 180
+    const sinValue = Math.sin(radian)
+    const cosValue = Math.cos(radian)
+    // 获取 u_SinB 和 u_CosB
+    const u_SinB = gl.getUniformLocation(gl.program,"u_SinB")
+    const u_CosB = gl.getUniformLocation(gl.program,"u_CosB")
+
+    // 赋值
+    gl.uniform1f(u_SinB,sinValue)
+    gl.uniform1f(u_CosB,cosValue)
+
     if (n < 0) {
         return console.log("没事设置顶点信息");
     }
@@ -44,20 +64,23 @@ window.onload = () => {
     // 清空颜色缓冲区
     gl.clear(gl.COLOR_BUFFER_BIT)
 
-    // 绘制  点
-    gl.drawArrays(gl.POINTS, 0, n)
+    // 绘制  线
+    // gl.drawArrays(gl.TRIANGLE_STRIP, 0, n)
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, n)
 }
 
 
 // 设置顶点信息
 function initVertexBuffers(gl) {
     const vertices = new Float32Array([
-        0, 0.5, 
-        -0.5,-0.5, 
+        0.5, 0.5, 
         0.5, -0.5,
+        -0.5,-0.5, 
+        
+        -0.5, 0.5,
     ])
 
-    const n = 3 // 点的个数
+    const n = 4 // 点的个数
     // 创建缓冲对象 
     const vertexBuffer = gl.createBuffer()
     if (!vertexBuffer) {

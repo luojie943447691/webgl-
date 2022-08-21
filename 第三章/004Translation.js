@@ -12,8 +12,9 @@ window.onload = () => {
     const VSHADER_SOURCE = (
         ` 
             attribute vec4 a_Position;
+            uniform vec4 u_Translation;
             void main(){ 
-                gl_Position = a_Position;
+                gl_Position = a_Position + u_Translation;
                 gl_PointSize = 10.0;
             }
         `
@@ -35,6 +36,13 @@ window.onload = () => {
     // 设置顶点信息
     const n = initVertexBuffers(gl)
 
+    // 平移
+    const u_Translation = gl.getUniformLocation(gl.program,"u_Translation")
+    console.log("u_Translation",u_Translation);
+    // 为什么这里第四个参数是 0，而非 1 呢？ 因为如果是 1 的话，由于之前的 a_Position 的第四个变量也是 1
+    //  ，这就会导致 1+1 = 2，这会导致所有坐标会被缩小一半
+    gl.uniform4f(u_Translation,0.3,0.3,0,0)
+
     if (n < 0) {
         return console.log("没事设置顶点信息");
     }
@@ -44,20 +52,23 @@ window.onload = () => {
     // 清空颜色缓冲区
     gl.clear(gl.COLOR_BUFFER_BIT)
 
-    // 绘制  点
-    gl.drawArrays(gl.POINTS, 0, n)
+    // 绘制  线
+    // gl.drawArrays(gl.TRIANGLE_STRIP, 0, n)
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, n)
 }
 
 
 // 设置顶点信息
 function initVertexBuffers(gl) {
     const vertices = new Float32Array([
-        0, 0.5, 
-        -0.5,-0.5, 
+        0.5, 0.5, 
         0.5, -0.5,
+        -0.5,-0.5, 
+        
+        -0.5, 0.5,
     ])
 
-    const n = 3 // 点的个数
+    const n = 4 // 点的个数
     // 创建缓冲对象 
     const vertexBuffer = gl.createBuffer()
     if (!vertexBuffer) {

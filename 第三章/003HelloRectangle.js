@@ -44,20 +44,23 @@ window.onload = () => {
     // 清空颜色缓冲区
     gl.clear(gl.COLOR_BUFFER_BIT)
 
-    // 绘制  点
-    gl.drawArrays(gl.POINTS, 0, n)
+    // 绘制  线
+    // gl.drawArrays(gl.TRIANGLE_STRIP, 0, n)
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, n)
 }
 
 
 // 设置顶点信息
 function initVertexBuffers(gl) {
     const vertices = new Float32Array([
-        0, 0.5, 
-        -0.5,-0.5, 
+        0.5, 0.5, 
         0.5, -0.5,
+        -0.5,-0.5, 
+        
+        -0.5, 0.5,
     ])
 
-    const n = 3 // 点的个数
+    const n = 4 // 点的个数
     // 创建缓冲对象 
     const vertexBuffer = gl.createBuffer()
     if (!vertexBuffer) {

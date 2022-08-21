@@ -11,10 +11,15 @@ window.onload = () => {
     // 顶点着色器
     const VSHADER_SOURCE = (
         ` 
+            // x' = x*CosB - y*SinB
+            // y' = x*SinB + y*CosB
+            // z' = z
             attribute vec4 a_Position;
+            uniform mat4 u_xformMatix;
+            uniform mat4 u_translationMatix;
             void main(){ 
-                gl_Position = a_Position;
-                gl_PointSize = 10.0;
+                gl_Position = u_xformMatix * a_Position;
+                gl_Position = u_translationMatix * gl_Position;
             }
         `
     )
@@ -35,6 +40,42 @@ window.onload = () => {
     // 设置顶点信息
     const n = initVertexBuffers(gl)
 
+    // 旋转
+    // 旋转角度 
+    const angle = 30
+    const radian = Math.PI * angle / 180
+    const sinValue = Math.sin(radian)
+    const cosValue = Math.cos(radian)
+    // 获取 u_xformMatix 和 u_translationMatix
+    const u_xformMatix = gl.getUniformLocation(gl.program, "u_xformMatix")
+    const u_translationMatix = gl.getUniformLocation(gl.program, "u_translationMatix")
+
+    // 注意，WebGL 中，矩阵是列主序的
+    const rotateMatrix = new Float32Array([
+        cosValue, sinValue, 0, 0,
+        -sinValue, cosValue, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    ])
+
+    // 赋值
+    gl.uniformMatrix4fv(u_xformMatix, false,rotateMatrix)
+
+    // 平移 
+    const Tx = 0.2;
+    const Ty = 0.2;
+    const Tz = 0;
+
+    const translationMattix = new Float32Array([
+        1,0,0,0,
+        0,1,0,0,
+        0,0,1,0,
+        Tx,Ty,Tz,1
+    ]) 
+
+    // 赋值
+    gl.uniformMatrix4fv(u_translationMatix, false,translationMattix)
+
     if (n < 0) {
         return console.log("没事设置顶点信息");
     }
@@ -44,20 +85,23 @@ window.onload = () => {
     // 清空颜色缓冲区
     gl.clear(gl.COLOR_BUFFER_BIT)
 
-    // 绘制  点
-    gl.drawArrays(gl.POINTS, 0, n)
+    // 绘制  线
+    // gl.drawArrays(gl.TRIANGLE_STRIP, 0, n)
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, n)
 }
 
 
 // 设置顶点信息
 function initVertexBuffers(gl) {
     const vertices = new Float32Array([
-        0, 0.5, 
-        -0.5,-0.5, 
+        0.5, 0.5,
         0.5, -0.5,
+        -0.5, -0.5,
+
+        -0.5, 0.5,
     ])
 
-    const n = 3 // 点的个数
+    const n = 4 // 点的个数
     // 创建缓冲对象 
     const vertexBuffer = gl.createBuffer()
     if (!vertexBuffer) {
@@ -77,7 +121,7 @@ function initVertexBuffers(gl) {
     }
 
     // 将缓冲区对象分配给 a_Position
-    gl.vertexAttribPointer(a_Position,2,gl.FLOAT,false,0,0)
+    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0)
 
     // 连接a_Position变量与分配分配给他的缓冲区对象
     gl.enableVertexAttribArray(a_Position)
